@@ -292,7 +292,7 @@ next:
     INVOKE  CreateEvent,
             NULL,
             FALSE,
-            TRUE,
+            FALSE,
             ADDR eventDescript
     cmp     eax, NULL
     je      freeMemory
@@ -527,6 +527,7 @@ PlayMusic PROC USES ebx,
     cmp     eax, 0
     je      wrong
     mov     mutexPlaying, eax
+    INVOKE  ReleaseMutex, mutexPlaying
 L1:
     cmp     mutexIsPlaying, 0
     jne     L2
@@ -537,6 +538,7 @@ L1:
     cmp     eax, 0
     je      wrong
     mov     mutexIsPlaying, eax
+    INVOKE  ReleaseMutex, mutexIsPlaying
 L2:
     cmp     canPlaying, 0
     jne     L3
@@ -558,6 +560,7 @@ L3:
     cmp     eax, 0
     je      wrong
     mov     mutexRead, eax
+    INVOKE  ReleaseMutex, mutexRead
 L4:
     INVOKE  CreateThread,
             NULL,
