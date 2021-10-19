@@ -11,6 +11,10 @@ main PROC
 L1:
     INVOKE  PlayMusic,  ADDR filename
     INVOKE  Sleep, 3000
+    INVOKE  StopMusic
+    INVOKE  Sleep, 3000
+    INVOKE  PlayMusic,  ADDR filename
+    INVOKE  Sleep, 3000
     INVOKE  PauseMusic
     INVOKE  Sleep, 3000
     INVOKE  ContinueMusic

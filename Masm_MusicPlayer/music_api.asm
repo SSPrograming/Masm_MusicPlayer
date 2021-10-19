@@ -208,10 +208,8 @@ after:
             mutexPlaying,
             INFINITE
     mov     Playing, FALSE
-    INVOKE  ReleaseSemaphore,
-            mutexPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexPlaying
     INVOKE  WaitForSingleObject,
             canPlaying,
             INFINITE
@@ -294,7 +292,7 @@ next:
     INVOKE  CreateEvent,
             NULL,
             FALSE,
-            FALSE,
+            TRUE,
             ADDR eventDescript
     cmp     eax, NULL
     je      freeMemory
@@ -335,29 +333,23 @@ ignore:
             mutexPlaying,
             INFINITE
     mov     Playing, TRUE
-    INVOKE  ReleaseSemaphore,
-            mutexPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexPlaying
 
     ; 正在播放
     INVOKE  WaitForSingleObject,
             mutexIsPlaying,
             INFINITE
     mov     isPlaying, TRUE
-    INVOKE  ReleaseSemaphore,
-            mutexIsPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexIsPlaying
     
     INVOKE  WaitForSingleObject,
             mutexRead,
             INFINITE
     mov     haveRead, 0
-    INVOKE  ReleaseSemaphore,
-            mutexRead,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexRead
     ; 循环开始
 L1:
     mov     eax, bufferSize
@@ -373,10 +365,8 @@ L1:
             INFINITE
     pop     eax
     mov     haveRead, eax
-    INVOKE  ReleaseSemaphore,
-            mutexRead,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexRead
     mov     over, FALSE
     ; 根据是否暂停填充不同数据
     cmp     isPlaying, TRUE
@@ -408,10 +398,8 @@ L2: ; 没到
     pop     eax
     add     haveRead, eax
     push    eax
-    INVOKE  ReleaseSemaphore,
-            mutexRead,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexRead
     pop     eax
     ; 判断是否结束
     cmp     eax, bufferSize
@@ -474,20 +462,16 @@ L6:
             mutexPlaying,
             INFINITE
     mov     Playing, FALSE
-    INVOKE  ReleaseSemaphore,
-            mutexPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexPlaying
     mov     playedTime, 0
     mov     totalTime, 0
     INVOKE  WaitForSingleObject,
             mutexRead,
             INFINITE
     mov     haveRead, 0
-    INVOKE  ReleaseSemaphore,
-            mutexRead,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexRead
     mov     totalRead, 0
     INVOKE  free, buffer    
     INVOKE  Sleep, 500
@@ -510,10 +494,8 @@ L9:
 
 ; 正确
 right:
-    INVOKE  ReleaseSemaphore, 
-            canPlaying, 
-            1, 
-            NULL
+    INVOKE  SetEvent, 
+            canPlaying
     mov     eax, TRUE
     ret
 ; 错误
@@ -525,10 +507,8 @@ closeFileHandle:
     INVOKE  CloseHandle, hFile
     INVOKE  DeleteFile, ADDR tempFilename
 release:
-    INVOKE  ReleaseSemaphore, 
-            canPlaying, 
-            1, 
-            NULL
+    INVOKE  SetEvent, 
+            canPlaying
 wrong:
     mov     eax, FALSE
     ret    
@@ -540,10 +520,9 @@ PlayMusic PROC USES ebx,
     ; 初始创建信号量
     cmp     mutexPlaying, 0
     jne     L1
-    INVOKE  CreateSemaphore,
+    INVOKE  CreateMutex,
             NULL,
-            1,
-            1,
+            TRUE,
             ADDR s1Descript
     cmp     eax, 0
     je      wrong
@@ -551,10 +530,9 @@ PlayMusic PROC USES ebx,
 L1:
     cmp     mutexIsPlaying, 0
     jne     L2
-    INVOKE  CreateSemaphore,
+    INVOKE  CreateMutex,
             NULL,
-            1,
-            1,
+            TRUE,
             ADDR s2Descript
     cmp     eax, 0
     je      wrong
@@ -562,10 +540,10 @@ L1:
 L2:
     cmp     canPlaying, 0
     jne     L3
-    INVOKE  CreateSemaphore,
+    INVOKE  CreateEvent,
             NULL,
-            1,
-            1,
+            FALSE,
+            TRUE,
             ADDR s3Descript
     cmp     eax, 0
     je      wrong
@@ -573,10 +551,9 @@ L2:
 L3:
     cmp     mutexRead, 0
     jne     L4
-    INVOKE  CreateSemaphore,
+    INVOKE  CreateMutex,
             NULL,
-            1,
-            1,
+            TRUE,
             ADDR s4Descript
     cmp     eax, 0
     je      wrong
@@ -606,19 +583,15 @@ StopMusic PROC
             mutexPlaying,
             INFINITE
     mov     Playing, FALSE
-    INVOKE  ReleaseSemaphore,
-            mutexPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexPlaying
     cmp     canPlaying, 0
     je      ignore
     INVOKE  WaitForSingleObject,
             canPlaying,
             INFINITE
-    INVOKE  ReleaseSemaphore,
-            canPlaying,
-            1,
-            NULL
+    INVOKE  SetEvent,
+            canPlaying
 ignore:
     mov     eax, TRUE
     ret
@@ -632,10 +605,8 @@ PauseMusic PROC
             mutexIsPlaying,
             INFINITE
     mov     isPlaying, FALSE
-    INVOKE  ReleaseSemaphore,
-            mutexIsPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexIsPlaying
 ignore:
     mov     eax, TRUE
     ret
@@ -649,10 +620,8 @@ ContinueMusic PROC
             mutexIsPlaying,
             INFINITE
     mov     isPlaying, TRUE
-    INVOKE  ReleaseSemaphore,
-            mutexIsPlaying,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexIsPlaying
 ignore:
     mov     eax, TRUE
     ret
@@ -763,10 +732,8 @@ SetMusicTime PROC,
             INFINITE
     pop     eax
     mov     haveRead, eax
-    INVOKE  ReleaseSemaphore,
-            mutexRead,
-            1,
-            NULL
+    INVOKE  ReleaseMutex,
+            mutexRead
     mov     eax, TRUE
     ret
 wrong:
